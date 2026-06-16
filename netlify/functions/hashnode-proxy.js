@@ -1,8 +1,7 @@
 // Try endpoints in order until one returns valid JSON
-const ENDPOINTS = [
-    'https://gql.hashnode.com',
-    'https://api.hashnode.com',
-]
+const ENDPOINTS = process.env.HASHNODE_API_URL
+    ? [process.env.HASHNODE_API_URL]
+    : ['https://gql.hashnode.com', 'https://api.hashnode.com']
 
 async function tryFetch(url, body, token) {
     const res = await fetch(url, {
