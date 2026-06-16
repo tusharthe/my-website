@@ -1,4 +1,26 @@
-const HASHNODE_API = 'https://gql.hashnode.com'
+// Try endpoints in order until one returns valid JSON
+const ENDPOINTS = [
+    'https://gql.hashnode.com',
+    'https://api.hashnode.com',
+]
+
+async function tryFetch(url, body, token) {
+    const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token,
+        },
+        body,
+        redirect: 'manual',
+    })
+    const text = await res.text()
+    try {
+        return { ok: true, data: JSON.parse(text), url }
+    } catch {
+        return { ok: false, status: res.status, preview: text.slice(0, 100), url }
+    }
+}
 
 export const handler = async (event) => {
     const headers = {
@@ -21,33 +43,24 @@ export const handler = async (event) => {
     }
 
     try {
-        const response = await fetch(HASHNODE_API, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token,
-            },
-            body: event.body,
-        })
+        const failures = []
 
-        const text = await response.text()
-
-        // Guard against non-JSON (e.g. redirect landing pages)
-        let data
-        try {
-            data = JSON.parse(text)
-        } catch {
-            console.error('Hashnode returned non-JSON:', text.slice(0, 300))
-            return {
-                statusCode: 502,
-                headers,
-                body: JSON.stringify({ errors: [{ message: `Hashnode API returned unexpected response (status ${response.status}). Endpoint may have changed.` }] }),
+        for (const url of ENDPOINTS) {
+            const result = await tryFetch(url, event.body, token)
+            if (result.ok) {
+                return { statusCode: 200, headers, body: JSON.stringify(result.data) }
             }
+            console.error(`[hashnode-proxy] ${url} failed — status ${result.status}: ${result.preview}`)
+            failures.push(`${url} → ${result.status}`)
         }
 
-        return { statusCode: 200, headers, body: JSON.stringify(data) }
+        return {
+            statusCode: 502,
+            headers,
+            body: JSON.stringify({ errors: [{ message: `All Hashnode endpoints failed: ${failures.join(' | ')}` }] }),
+        }
     } catch (err) {
-        console.error('hashnode-proxy error:', err)
+        console.error('[hashnode-proxy] fetch error:', err)
         return { statusCode: 500, headers, body: JSON.stringify({ errors: [{ message: err.message }] }) }
     }
 }
