@@ -49,7 +49,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
-const GQL_ENDPOINT = import.meta.env.VITE_HASHNODE_GQL_ENDPOINT
+const GQL_ENDPOINT = '/.netlify/functions/hashnode-proxy'
 const DEFAULT_HOST = import.meta.env.VITE_HASHNODE_MY_HOST
 
 const route = useRoute()

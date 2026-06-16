@@ -51,7 +51,7 @@
 import { ref, onMounted } from 'vue'
 import BlogCard from '../components/blog/BlogCard.vue'
 
-const GQL_ENDPOINT = import.meta.env.VITE_HASHNODE_GQL_ENDPOINT
+const GQL_ENDPOINT = '/.netlify/functions/hashnode-proxy'
 const myHost = import.meta.env.VITE_HASHNODE_MY_HOST
 const commHost = import.meta.env.VITE_HASHNODE_COMMUNITY_HOST
 
